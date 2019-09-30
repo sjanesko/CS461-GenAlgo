@@ -143,6 +143,7 @@ def crossOver(scheduleA, scheduleB):
     courses.extend(scheduleB.courseArray[divisionPoint:])
     return Schedule.Schedule(courses[0], courses[1], courses[2], courses[3], courses[4], courses[5], courses[6], courses[7], courses[8], courses[9], courses[10], courses[11])
 
+def normalizeScores(population):
 
 # Setup dictionaries for schedule use
 coursesExpectedEnrollment = {"CS 101A": 40, "CS 101B": 25, "CS 201A": 30, "CS 201B": 30, "CS 191A": 60,
