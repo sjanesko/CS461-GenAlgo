@@ -127,12 +127,21 @@ def fitnessCalculation(schedule):
     if adjacentTime == True:
         # one in katz other is not
         if ((courseRoom["CS 201A"][:4] or courseRoom["CS201B"][:4]) == "Katz" and (courseRoom["CS 291A"][:4] or courseRoom["CS 291B"][:4]) != "Katz" or (courseRoom["CS 291A"][:4] or courseRoom["CS 291B"][:4]) == "Katz" and (courseRoom["CS 201A"][:4] or courseRoom["CS 201B"][:4]) != "Katz"):
-            fitnessScore == fitnessScore * 0.03
+            fitnessScore = fitnessScore * 0.03
         # one in bloch other is not
         if ((courseRoom["CS 201A"][:5] or courseRoom["CS201B"][:5]) == "Bloch" and (courseRoom["CS 291A"][:5] or courseRoom["CS 291B"][:5]) != "Bloch" or (courseRoom["CS 291A"][:5] or courseRoom["CS 291B"][:5]) == "Bloch" and (courseRoom["CS 201A"][:5] or courseRoom["CS 201B"][:5]) != "Bloch"):
-            fitnessScore == fitnessScore * 0.03
+            fitnessScore = fitnessScore * 0.03
 
-    return fitnessScore
+
+    schedule.fitnessScore = fitnessScore
+
+
+def crossOver(scheduleA, scheduleB):
+    '''Breeds two schedules together by splitting on a random division point'''
+    divisionPoint = r.randint(1, 11)
+    courses = scheduleA.courseArray[:divisionPoint]
+    courses.extend(scheduleB.courseArray[divisionPoint:])
+    return Schedule.Schedule(courses[0], courses[1], courses[2], courses[3], courses[4], courses[5], courses[6], courses[7], courses[8], courses[9], courses[10], courses[11])
 
 
 # Setup dictionaries for schedule use
@@ -153,7 +162,7 @@ timeSlots = [1000, 1100, 1200, 1300, 1400, 1500, 1600]  # military time
 
 population = []
 
-for x in range(0, 1):
+for x in range(0, 100):
     CS101A = Course.Course("CS 101A", r.choice(list(instructorClasses.keys())), r.choice(
         list(roomCapacities.keys())), r.choice(list(timeSlots)))
     CS101B = Course.Course("CS 101B", r.choice(list(instructorClasses.keys())), r.choice(
@@ -182,7 +191,8 @@ for x in range(0, 1):
     population.append(Schedule.Schedule(CS101A, CS101B, CS201A, CS201B,
                                         CS191A, CS191B, CS291B, CS291A, CS303, CS341, CS449, CS461))
 
+x = list(map(fitnessCalculation, population))
+print(len(population))
 for schedule in population:
     schedule.print()
-
-print(fitnessCalculation(population[0]))
+    print(schedule.fitnessScore)
