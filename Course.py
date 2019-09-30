@@ -5,4 +5,6 @@ class Course:
         self.room = room
         self.time = time
 
+    def print(self):
+        print(self.name + '  ' + self.instructor + '  ' + self.room + '  ' + str(self.time))
         
