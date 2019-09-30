@@ -18,7 +18,6 @@ def fitnessCalculation(schedule):
                        for course in schedule.courseArray]
     InstructorTimesDupes = list(
         set([x for x in instructorTimes if instructorTimes.count(x) > 1]))
-    print(InstructorTimesDupes)
 
     for course in schedule.courseArray:
         # For each course that is taught by an instructor who can teach it: +3
@@ -46,7 +45,6 @@ def fitnessCalculation(schedule):
         course.instructor for course in schedule.courseArray]
     instructorDict = {key: value for (key, value) in (
         (x, instructorNameOccurences.count(x)) for x in set(instructorNameOccurences))}
-    print(instructorDict)
 
     for x in (instructorDict.keys()):
         if instructorDict[x] > 4:
@@ -68,7 +66,6 @@ def fitnessCalculation(schedule):
         course.name, course.time) for course in schedule.courseArray]}
     courseRoom = {key: value for (key, value) in [(
         course.name, course.room) for course in schedule.courseArray]}
-    print(courseRoom)
 
     # CS 101 and CS 191 are usually taken the same semester
     # Courses are scheduled for same time: -10% to score
