@@ -2,7 +2,7 @@
 import Course
 import Schedule
 import random as r
-
+import operator
 
 def fitnessCalculation(schedule):
     fitnessScore = 0
@@ -135,15 +135,42 @@ def fitnessCalculation(schedule):
 
     schedule.fitnessScore = fitnessScore
 
+def mutate(course):
+    '''Mutates a course'''
+    instructorMutate = r.random()
+    if instructorMutate < 0.01:
+        course.instructor = r.choice(list(instructorClasses.keys()))
+
+    roomMutate = r.random()
+
+    if roomMutate < 0.01:
+        course.room = r.choice(list(roomCapacities.keys()))
+
+    timeMutate = r.random()
+    if timeMutate < 0.01:
+        course.time = r.choice(list(timeSlots))
+
 
 def crossOver(scheduleA, scheduleB):
     '''Breeds two schedules together by splitting on a random division point'''
     divisionPoint = r.randint(1, 11)
     courses = scheduleA.courseArray[:divisionPoint]
     courses.extend(scheduleB.courseArray[divisionPoint:])
+
+    #call mutation function for each course
+    mutations = list(map(mutate, courses))
     return Schedule.Schedule(courses[0], courses[1], courses[2], courses[3], courses[4], courses[5], courses[6], courses[7], courses[8], courses[9], courses[10], courses[11])
 
 def normalizeScores(population):
+    sumOfSquares = 0
+    for schedule in population: 
+        if schedule.fitnessScore > 0:
+            schedule.normalizedScore = schedule.fitnessScore ** 2
+            sumOfSquares += schedule.normalizedScore
+        else:
+            schedule.normalizedScore = 0
+    for schedule in population: 
+        schedule.normalizedScore = schedule.normalizedScore / sumOfSquares
 
 # Setup dictionaries for schedule use
 coursesExpectedEnrollment = {"CS 101A": 40, "CS 101B": 25, "CS 201A": 30, "CS 201B": 30, "CS 191A": 60,
@@ -163,7 +190,7 @@ timeSlots = [1000, 1100, 1200, 1300, 1400, 1500, 1600]  # military time
 
 population = []
 
-for x in range(0, 100):
+for x in range(0, 1000):
     CS101A = Course.Course("CS 101A", r.choice(list(instructorClasses.keys())), r.choice(
         list(roomCapacities.keys())), r.choice(list(timeSlots)))
     CS101B = Course.Course("CS 101B", r.choice(list(instructorClasses.keys())), r.choice(
@@ -192,8 +219,39 @@ for x in range(0, 100):
     population.append(Schedule.Schedule(CS101A, CS101B, CS201A, CS201B,
                                         CS191A, CS191B, CS291B, CS291A, CS303, CS341, CS449, CS461))
 
+
+# calls fitnesscalculation on the entire population 
 x = list(map(fitnessCalculation, population))
-print(len(population))
+
+#normalized the scores for the cumulative distribution
+normalizeScores(population)
+#sort list in place
+#population.sort(key=operator.attrgetter('fitnessScore'))
+
+#create cumulative distribution dict
+cumulativeDistributionCounter = 0
+cumulativeDistributionArr = []
+
 for schedule in population:
-    schedule.print()
-    print(schedule.fitnessScore)
+    cumulativeDistributionArr.append((cumulativeDistributionCounter, schedule))
+    cumulativeDistributionCounter += schedule.normalizedScore
+
+# clear population to make room for children and clear memory
+population.clear()
+
+#create new population
+while len(population) != 1000: 
+    # select two schedules to breed
+    j = r.random()
+
+    idxA = 0
+    while cumulativeDistributionArr[idxA][0] < j:
+        idxA += 1
+    
+    k = r.random()
+    idxB = 0
+    while cumulativeDistributionArr[idxB][0] < k:
+        idxB += 1
+    
+    population.append(crossOver(cumulativeDistributionArr[idxA][1], cumulativeDistributionArr[idxB][1]))
+    
