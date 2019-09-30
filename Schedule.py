@@ -8,4 +8,5 @@ class Schedule:
         print("Schedule:")
         for course in self.courseArray:            
             course.print()
+        print("Fitness Score: " + str(self.fitnessScore))
         print("------------")

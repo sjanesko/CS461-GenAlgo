@@ -3,6 +3,7 @@ import Course
 import Schedule
 import random as r
 import operator
+import time
 
 def fitnessCalculation(schedule):
     fitnessScore = 0
@@ -13,7 +14,7 @@ def fitnessCalculation(schedule):
     courseRoomsDupes = list(
         set([x for x in courseRoomTime if courseRoomTime.count(x) > 1]))
 
-    # creates array of tuples for teacher/time and creatse list of duplicates
+    # creates array of tuples for teacher/time and creates list of duplicates
     instructorTimes = [(course.instructor, course.time)
                        for course in schedule.courseArray]
     InstructorTimesDupes = list(
@@ -53,15 +54,16 @@ def fitnessCalculation(schedule):
     # For each schedule that has Rao or Mitchell (graduate faculty) teaching more courses than Hare or Bingham: -5% to total fitness score.
     if ("Rao" in instructorDict and "Hare" in instructorDict and "Bingham" in instructorDict):
         if (instructorDict["Rao"] > instructorDict["Hare"] or instructorDict["Rao"] > instructorDict["Bingham"]):
-            fitnessScore -= fitnessScore * 0.05
+            fitnessScore *= .95
 
     elif ("Mitchell" in instructorDict and "Hare" in instructorDict and "Bingham" in instructorDict):
         if (instructorDict["Mitchell"] > instructorDict["Hare"] or instructorDict["Mitchell"] > instructorDict["Bingham"]):
-            fitnessScore -= fitnessScore * 0.05
+            fitnessScore *= .95
     elif ("Hare" not in instructorDict or "Bingham" not in instructorDict):
         # Hare or Bingham not teaching any classes to lower by 5%
-        fitnessScore -= fitnessScore * 0.05
+        fitnessScore *= .95
 
+    #create array of course times and course rooms
     courseTime = {key: value for (key, value) in [(
         course.name, course.time) for course in schedule.courseArray]}
     courseRoom = {key: value for (key, value) in [(
@@ -69,68 +71,83 @@ def fitnessCalculation(schedule):
 
     # CS 101 and CS 191 are usually taken the same semester
     # Courses are scheduled for same time: -10% to score
-    if (courseTime["CS 101A"] == courseTime["CS 191A"] or courseTime["CS 101A"] == courseTime["CS 191B"]):
-        fitnessScore -= fitnessScore * .1
-
-    # Courses are scheduled for same time: -10% to score
-    elif (courseTime["CS 101B"] == courseTime["CS 191A"] or courseTime["CS 101B"] == courseTime["CS 191B"]):
-        fitnessScore -= fitnessScore * .1
+    if ((courseTime["CS 101A"] or courseTime["CS 101B"]) == (courseTime["CS 191A"] or courseTime["CS 191B"])):
+        fitnessScore *= .90
 
     adjacentTime = False
     # Courses are scheduled for adjacent times: +5% to score
-    if (courseTime["CS 101A"] == (courseTime["CS 191A"] - 100) or courseTime["CS 101A"] == (courseTime["CS 191A"] + 100)):
-        fitnessScore += fitnessScore * .05
+    if (abs(courseTime["CS 101A"] - (courseTime["CS 191A"]) == 100) or abs((courseTime["CS 101A"] - (courseTime["CS 191A"])) == 100)):
+        fitnessScore *= 1.05
         adjacentTime = True
-    elif (courseTime["CS 101A"] == (courseTime["CS 191B"] - 100) or courseTime["CS 101A"] == (courseTime["CS 191B"] + 100)):
-        fitnessScore += fitnessScore * .05
+    elif (abs(courseTime["CS 101A"] - (courseTime["CS 191B"]) == 100) or abs(courseTime["CS 101A"] - (courseTime["CS 191B"]) == 100)):
+        fitnessScore *= 1.05
         adjacentTime = True
-    elif (courseTime["CS 101B"] == (courseTime["CS 191A"] - 100) or courseTime["CS 101B"] == (courseTime["CS 191A"] + 100)):
-        fitnessScore += fitnessScore * .05
+    elif (abs(courseTime["CS 101B"] - (courseTime["CS 191A"]) == 100) or abs(courseTime["CS 101B"] - (courseTime["CS 191A"]) == 100)):
+        fitnessScore *= 1.05
         adjacentTime = True
-    elif (courseTime["CS 101B"] == (courseTime["CS 191B"] - 100) or courseTime["CS 101B"] == (courseTime["CS 191B"] + 100)):
-        fitnessScore += fitnessScore * .05
+    elif (abs(courseTime["CS 101B"] - (courseTime["CS 191B"]) == 100) or abs(courseTime["CS 101B"] - (courseTime["CS 191B"] == 100))):
+        fitnessScore *= 1.05
         adjacentTime = True
 
     if adjacentTime == True:
+        # Are in the same building: 
+        if (((courseRoom["CS 101A"][:4] or courseRoom["CS 101B"][:4]) == "Katz") and ((courseRoom["CS 191A"][:4] or courseRoom["CS 191B"][:4] == "Katz"))):
+            fitnessScore += 5
+        if (((courseRoom["CS 101A"][:4] or courseRoom["CS 101B"][:4]) == "Haag") and ((courseRoom["CS 191A"][:4] or courseRoom["CS 191B"][:4] == "Haag"))):
+            fitnessScore += 5
+        if (((courseRoom["CS 101A"][:4] or courseRoom["CS 101B"][:4]) == "Bloc") and ((courseRoom["CS 191A"][:4] or courseRoom["CS 191B"][:4] == "Bloc"))):
+            fitnessScore += 5
+        if (((courseRoom["CS 101A"][:4] or courseRoom["CS 101B"][:4]) == "Flar") and ((courseRoom["CS 191A"][:4] or courseRoom["CS 191B"][:4] == "Flar"))):
+            fitnessScore += 5
+        if (((courseRoom["CS 101A"][:4] or courseRoom["CS 101B"][:4]) == "Roya") and ((courseRoom["CS 191A"][:4] or courseRoom["CS 191B"][:4] == "Roya"))):
+            fitnessScore += 5
+
         # one in katz other is not
         if ((courseRoom["CS 101A"][:4] or courseRoom["CS 101B"][:4]) == "Katz" and (courseRoom["CS 191A"][:4] or courseRoom["CS 191B"][:4]) != "Katz" or (courseRoom["CS 191A"][:4] or courseRoom["CS 191B"][:4]) == "Katz" and (courseRoom["CS 101A"][:4] or courseRoom["CS 101B"][:4]) != "Katz"):
-            fitnessScore == fitnessScore * 0.03
+            fitnessScore *=  .97 
         # one in bloch other is not
         if ((courseRoom["CS 101A"][:5] or courseRoom["CS 101B"][:5]) == "Bloch" and (courseRoom["CS 191A"][:5] or courseRoom["CS 191B"][:5]) != "Bloch" or (courseRoom["CS 191A"][:5] or courseRoom["CS 191B"][:5]) == "Bloch" and (courseRoom["CS 101A"][:5] or courseRoom["CS 101B"][:5]) != "Bloch"):
-            fitnessScore == fitnessScore * 0.03
+            fitnessScore *=  .97
 
-    adjacentTime = False
     # CS 201 and CS 291 are usually taken the same semester
     # Courses are scheduled for same time: -10% to score
-    if (courseTime["CS 201A"] == courseTime["CS 291A"] or courseTime["CS 201A"] == courseTime["CS 291B"]):
-        fitnessScore -= fitnessScore * .1
-
-    # Courses are scheduled for same time: -10% to score
-    elif (courseTime["CS 201B"] == courseTime["CS 291A"] or courseTime["CS 201B"] == courseTime["CS 291B"]):
-        fitnessScore -= fitnessScore * .1
+    if ((courseTime["CS 201A"] or courseTime["CS 201B"]) or (courseTime["CS 291A"] == courseTime["CS 291B"])):
+        fitnessScore  * .9
 
     adjacentTime = False
     # Courses are scheduled for adjacent times: +5% to score
     if (courseTime["CS 201A"] == (courseTime["CS 291A"] - 100) or courseTime["CS 101A"] == (courseTime["CS 191A"] + 100)):
-        fitnessScore += fitnessScore * .05
+        fitnessScore *= 1.05
         adjacentTime = True
     elif (courseTime["CS 201A"] == (courseTime["CS 291B"] - 100) or courseTime["CS 201A"] == (courseTime["CS 291B"] + 100)):
-        fitnessScore += fitnessScore * .05
+        fitnessScore *= 1.05
         adjacentTime = True
     elif (courseTime["CS 201B"] == (courseTime["CS 291A"] - 100) or courseTime["CS 201B"] == (courseTime["CS 291A"] + 100)):
-        fitnessScore += fitnessScore * .05
+        fitnessScore *= 1.05
         adjacentTime = True
     elif (courseTime["CS 201B"] == (courseTime["CS 291B"] - 100) or courseTime["CS 201B"] == (courseTime["CS 291B"] + 100)):
-        fitnessScore += fitnessScore * .05
+        fitnessScore *= 1.05
         adjacentTime = True
 
     if adjacentTime == True:
+        # Are in the same building: 
+        if (((courseRoom["CS 201A"][:4] or courseRoom["CS 201B"][:4]) == "Katz") and ((courseRoom["CS 291A"][:4] or courseRoom["CS 291B"][:4] == "Katz"))):
+            fitnessScore += 5
+        if (((courseRoom["CS 201A"][:4] or courseRoom["CS 201B"][:4]) == "Haag") and ((courseRoom["CS 291A"][:4] or courseRoom["CS 291B"][:4] == "Haag"))):
+            fitnessScore += 5
+        if (((courseRoom["CS 201A"][:4] or courseRoom["CS 201B"][:4]) == "Bloc") and ((courseRoom["CS 291A"][:4] or courseRoom["CS 291B"][:4] == "Bloc"))):
+            fitnessScore += 5
+        if (((courseRoom["CS 201A"][:4] or courseRoom["CS 201B"][:4]) == "Flar") and ((courseRoom["CS 291A"][:4] or courseRoom["CS 291B"][:4] == "Flar"))):
+            fitnessScore += 5
+        if (((courseRoom["CS 201A"][:4] or courseRoom["CS 201B"][:4]) == "Roya") and ((courseRoom["CS 291A"][:4] or courseRoom["CS 291B"][:4] == "Roya"))):
+            fitnessScore += 5
+
         # one in katz other is not
         if ((courseRoom["CS 201A"][:4] or courseRoom["CS201B"][:4]) == "Katz" and (courseRoom["CS 291A"][:4] or courseRoom["CS 291B"][:4]) != "Katz" or (courseRoom["CS 291A"][:4] or courseRoom["CS 291B"][:4]) == "Katz" and (courseRoom["CS 201A"][:4] or courseRoom["CS 201B"][:4]) != "Katz"):
-            fitnessScore = fitnessScore * 0.03
+            fitnessScore *=  .97
         # one in bloch other is not
         if ((courseRoom["CS 201A"][:5] or courseRoom["CS201B"][:5]) == "Bloch" and (courseRoom["CS 291A"][:5] or courseRoom["CS 291B"][:5]) != "Bloch" or (courseRoom["CS 291A"][:5] or courseRoom["CS 291B"][:5]) == "Bloch" and (courseRoom["CS 201A"][:5] or courseRoom["CS 201B"][:5]) != "Bloch"):
-            fitnessScore = fitnessScore * 0.03
+            fitnessScore *=  .97
 
 
     schedule.fitnessScore = fitnessScore
@@ -138,16 +155,16 @@ def fitnessCalculation(schedule):
 def mutate(course):
     '''Mutates a course'''
     instructorMutate = r.random()
-    if instructorMutate < 0.01:
+    if instructorMutate < 0.03:
         course.instructor = r.choice(list(instructorClasses.keys()))
 
     roomMutate = r.random()
 
-    if roomMutate < 0.01:
+    if roomMutate < 0.03:
         course.room = r.choice(list(roomCapacities.keys()))
 
     timeMutate = r.random()
-    if timeMutate < 0.01:
+    if timeMutate < 0.03:
         course.time = r.choice(list(timeSlots))
 
 
@@ -159,6 +176,7 @@ def crossOver(scheduleA, scheduleB):
 
     #call mutation function for each course
     mutations = list(map(mutate, courses))
+
     return Schedule.Schedule(courses[0], courses[1], courses[2], courses[3], courses[4], courses[5], courses[6], courses[7], courses[8], courses[9], courses[10], courses[11])
 
 def normalizeScores(population):
@@ -188,9 +206,10 @@ roomCapacities = {"Haag 301": 70, "Haag 206": 30, "Royall 204": 70,
 
 timeSlots = [1000, 1100, 1200, 1300, 1400, 1500, 1600]  # military time
 
+populationSize = 500    
 population = []
 
-for x in range(0, 1000):
+for x in range(0, populationSize):
     CS101A = Course.Course("CS 101A", r.choice(list(instructorClasses.keys())), r.choice(
         list(roomCapacities.keys())), r.choice(list(timeSlots)))
     CS101B = Course.Course("CS 101B", r.choice(list(instructorClasses.keys())), r.choice(
@@ -219,39 +238,62 @@ for x in range(0, 1000):
     population.append(Schedule.Schedule(CS101A, CS101B, CS201A, CS201B,
                                         CS191A, CS191B, CS291B, CS291A, CS303, CS341, CS449, CS461))
 
+lastGenerationBestFits = [-1, -1, -1]
+lastGenerationIncrease = [999, 999, 999]
+bestSchedule = population[0]
 
-# calls fitnesscalculation on the entire population 
-x = list(map(fitnessCalculation, population))
+while not all(i <= 0.02 for i in lastGenerationIncrease):
+    # calls fitnesscalculation on the entire population 
+    x = list(map(fitnessCalculation, population))
 
-#normalized the scores for the cumulative distribution
-normalizeScores(population)
-#sort list in place
-#population.sort(key=operator.attrgetter('fitnessScore'))
+    #normalized the scores for the cumulative distribution
+    normalizeScores(population)
 
-#create cumulative distribution dict
-cumulativeDistributionCounter = 0
-cumulativeDistributionArr = []
+    #sort
+    population = sorted(population, key=lambda x: (x.fitnessScore))
 
-for schedule in population:
-    cumulativeDistributionArr.append((cumulativeDistributionCounter, schedule))
-    cumulativeDistributionCounter += schedule.normalizedScore
+    bestFit = max(schedule.fitnessScore for schedule in population)
+    print("Best fit: ", bestFit)
+    print("Average fitness: ", (sum(course.fitnessScore for course in population))/ populationSize)
+    print("---------------------------------")
+    if population[-1].fitnessScore > bestSchedule.fitnessScore:
+        bestSchedule = population[-1]
 
-# clear population to make room for children and clear memory
-population.clear()
+    #create cumulative distribution dict
+    cumulativeDistributionCounter = 0
+    cumulativeDistributionArr = []
 
-#create new population
-while len(population) != 1000: 
-    # select two schedules to breed
-    j = r.random()
+    for i, schedule in enumerate(population):
+        if not (i == populationSize - 1):
+            cumulativeDistributionArr.append((cumulativeDistributionCounter, schedule))
+            cumulativeDistributionCounter += schedule.normalizedScore
+        else:
+            cumulativeDistributionArr.append((1, schedule))
 
-    idxA = 0
-    while cumulativeDistributionArr[idxA][0] < j:
-        idxA += 1
-    
-    k = r.random()
-    idxB = 0
-    while cumulativeDistributionArr[idxB][0] < k:
-        idxB += 1
-    
-    population.append(crossOver(cumulativeDistributionArr[idxA][1], cumulativeDistributionArr[idxB][1]))
-    
+
+    # clear population to make room for children and clear memory
+    population.clear()
+
+    #create new population
+    while len(population) !=  populationSize: 
+        # select two schedules to breed
+        j = r.random()
+        idxA = 0
+        while cumulativeDistributionArr[idxA][0] < j:
+            idxA += 1
+        
+        k = r.random()
+        idxB = 0
+        while cumulativeDistributionArr[idxB][0] < k:
+            idxB += 1
+        
+        population.append(crossOver(cumulativeDistributionArr[idxA][1], cumulativeDistributionArr[idxB][1]))
+
+    difference = ((bestFit - lastGenerationBestFits[2]) / lastGenerationBestFits[2]) * 100
+    lastGenerationIncrease.append(difference)
+    lastGenerationIncrease.pop(0)
+
+    lastGenerationBestFits.append(bestFit)
+    lastGenerationBestFits.pop(0)
+
+bestSchedule.print()
